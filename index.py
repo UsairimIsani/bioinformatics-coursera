@@ -1,3 +1,6 @@
+from math import floor
+
+
 def PatternCount(text, pattern):
     count = 0
     len_f_text = len(text)
@@ -39,7 +42,7 @@ def ReverseComplement(Pattern):
     rev_pat = list(rev_pat)
     rev_pat.reverse()
     rev_pat = "".join(rev_pat)
-    with open("answer.txt","w+") as f:
+    with open("answer.txt", "w+") as f:
         f.write(rev_pat)
     return rev_pat
 
@@ -56,33 +59,33 @@ def PatternMatching(Pattern, Genome):
             ind.append(str(i))
     return " ".join(ind)
 
+
 def ReadInput(path):
-    read_inp =[]
-    with open(path,"r+") as f:
+    read_inp = []
+    with open(path, "r+") as f:
         for line in f:
             read_inp.append(line.strip())
-    return read_inp        
+    return read_inp
+
 
 def WriteOutput(output):
-    with open("answer.txt","w+") as f: 
+    with open("answer.txt", "w+") as f:
         f.write(output)
 
 
 def LastSymbol(Pattern):
-    return Pattern[-1]        
+    return Pattern[-1]
+
 
 def Prefix(Pattern):
     return Pattern[:-1]
 
+
 def SymbolToNumber(symbol):
-    if symbol == "A":
-        return 0    
-    elif symbol == "C":
-        return 1    
-    elif symbol == "G":
-        return 2    
-    elif symbol == "T":
-        return 3
+    sym_to_num = {
+        "A": 0, "C": 1, "G": 2, "T": 3
+    }
+    return sym_to_num[symbol]
 
 
 def PatternToNumber(Pattern):
@@ -90,6 +93,133 @@ def PatternToNumber(Pattern):
         return 0
     last_symbol = LastSymbol(Pattern)
     prefix = Prefix(Pattern)
-    return 4 * PatternToNumber(prefix) + SymbolToNumber(last_symbol)  
+    return 4 * PatternToNumber(prefix) + SymbolToNumber(last_symbol)
 
-print(PatternToNumber(ReadInput("dataset_3010_2.txt")[0]))
+# print(PatternToNumber(ReadInput("dataset_3010_2.txt")[0]))
+
+
+def NumberToSymbol(num):
+    num_to_sym = {
+        0: "A",
+        1: "C",
+        2: "G",
+        3: "T"
+    }
+    return num_to_sym[num]
+
+
+def Quotient(index, divisor):
+    return floor(index/divisor)
+
+
+def Remainder(index, divisor):
+    return index % divisor
+
+
+def NumberToPattern(index, k):
+    index = int(index)
+    k = int(k)
+    if k == 1:
+        return NumberToSymbol(index)
+    prefix_index = Quotient(index, 4)
+    remainder = Remainder(index, 4)
+    sym = NumberToSymbol(remainder)
+    prefix_pattern = NumberToPattern(prefix_index, k-1)
+    return prefix_pattern + sym
+
+# inp = ReadInput("dataset_3010_5 (1).txt")
+# print(NumberToPattern(45,4))
+# WriteOutput(NumberToPattern(inp[0],inp[1]))
+
+
+def ComputingFrequencies(Text, k):
+    FrequencyArray = {}
+    text_len = len(Text)
+    for i in range((4**k)):
+        FrequencyArray[NumberToPattern(i, k)] = 0
+    for i in range(text_len-k+1):
+        pattern = Text[i:i+k]
+        FrequencyArray[pattern] = FrequencyArray[pattern] + 1
+    return list(FrequencyArray.values())
+
+
+# inp = ReadInput("dataset_2994_5 (5).txt")
+# out = ComputingFrequencies(inp[0], int(inp[1]))
+# # out = ComputingFrequencies("AAAAC",2)
+# oup = []
+# for i in out:
+#     oup.append(str(i))
+# # print(" ".join(oup))
+# WriteOutput(" ".join(oup))
+
+#   BetterClumpFinding(Genome, k, t, L)
+#         FrequentPatterns ← an empty set
+#         for i ← 0 to 4k − 1
+#             Clump(i) ← 0
+#         Text ← Genome(0, L)
+#         FrequencyArray ← ComputingFrequencies(Text, k)
+#         for i ← 0 to 4k − 1
+#             if FrequencyArray(i) ≥ t
+#                 Clump(i) ← 1
+#         for i ← 1 to |Genome| − L
+#             FirstPattern ← Genome(i − 1, k)
+#             index ← PatternToNumber(FirstPattern)
+#             FrequencyArray(index) ← FrequencyArray(index) − 1
+#             LastPattern ← Genome(i + L − k, k)
+#             index ← PatternToNumber(LastPattern)
+#             FrequencyArray(index) ← FrequencyArray(index) + 1
+#             if FrequencyArray(index) ≥ t
+#                 Clump(index) ← 1
+#         for i ← 0 to 4k − 1
+#             if Clump(i) = 1
+#                 Pattern ← NumberToPattern(i, k)
+#                 add Pattern to the set FrequentPatterns
+#         return FrequentPatterns
+
+def computing_frequencies(Text, k):
+    FrequencyArray = {}
+    text_len = len(Text)
+    for i in range((4**k)):
+        FrequencyArray[NumberToPattern(i, k)] = 0
+    for i in range(text_len-k+1):
+        pattern = Text[i:i+k]
+        FrequencyArray[pattern] = FrequencyArray[pattern] + 1
+    return FrequencyArray
+
+
+def better_clump_finding(genome, k, L, t):
+    genome_len = len(genome)
+    frequent_patterns = []
+    clump = {}
+    # for i in range(4**k):
+    #     clump[NumberToPattern(i, k)] = 0
+    text = genome[0:L]
+    frequency_array = computing_frequencies(text, k)
+    for i in range(4**k):
+        if frequency_array[NumberToPattern(i, k)] >= t:
+            clump[NumberToPattern(i, k)] = 1
+    for i in range(1,genome_len-L+1):
+        first_pattern = genome[i-1:i+k-1]
+        frequency_array[first_pattern] = frequency_array[first_pattern] - 1
+        last_pattern = genome[i+L-k:i+L]
+        frequency_array[last_pattern] = frequency_array[last_pattern] + 1
+        if frequency_array[last_pattern] >= t:
+            clump[last_pattern] = 1
+    for i in clump.keys():
+        frequent_patterns.append(i)
+    return frequent_patterns
+
+
+# print(better_clump_finding("CGGACTCGACAGATGTGAAGAACGACAATGTGAAGACTCGACACGACAGAGTGAAGAGAAGAGGAAACATTGTAA",5,50,4))
+# inp = ReadInput("dataset_4_5.txt")
+# WriteOutput(" ".join(better_clump_finding(inp[0],8,30,4)))
+# print(better_clump_finding(inp[0],8,30,4))
+# inp = ReadInput("E_coli.txt")
+# WriteOutput(str(len(better_clump_finding(inp[0],9,500,3))))
+
+# print(FrequentWords("TAAACGTGAGAGAAACGTGCTGATTACACTTGTTCGTGTGGTAT",3))
+# print(ReverseComplement("CCAGATC"))
+print(PatternMatching("ATA","GACGATATACGACGATA"))
+
+
+
